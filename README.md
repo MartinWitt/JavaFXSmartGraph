@@ -21,7 +21,12 @@ through a [force-directed algorithm](https://en.wikipedia.org/wiki/Force-directe
 
 ## Documentation
 
-### What's **new**?
+### What's new?
+
+- (1.1.0) Automatic layout is now performed through an instantiated *strategy*. There are two available (but the pattern allows for the user to devise others):
+  
+  - `ForceDirectedSpringSystemLayoutStrategy`: this is the original implementation for the automatic placement, through a spring system;
+  - `ForceDirectedSpringGravityLayoutStrategy`: (**new**) this is a variant of the spring system implementation, but with a gravity pull towards the center of the panel. This is now the default strategy and has the advantage of not repelling isolated vertices and/or bipartite graphs to the edges of the panel.
 
 - (1.0.0) Package now available through [Maven Central](https://central.sonatype.com/namespace/com.brunomnsilva). The library seems stable, after dozens of college projects of my students have used it. Hence, the version was bumped to 1.0.0.
 
@@ -43,7 +48,7 @@ Example for Maven:
 <dependency>
     <groupId>com.brunomnsilva</groupId>
     <artifactId>smartgraph</artifactId>
-    <version>1.0.0</version>
+    <version>x.y.z</version>
 </dependency>
 ```
 
@@ -64,8 +69,8 @@ In windows the JVM machine should automatically take care of that, while in Linu
 Graph<String, String> g = new GraphEdgeList<>();
 // ... see Examples below
 
-SmartPlacementStrategy strategy = new SmartCircularSortedPlacementStrategy();
-SmartGraphPanel<String, String> graphView = new SmartGraphPanel<>(g, strategy);
+SmartPlacementStrategy initialPlacement = new SmartCircularSortedPlacementStrategy();
+SmartGraphPanel<String, String> graphView = new SmartGraphPanel<>(g, initialPlacement);
 Scene scene = new Scene(graphView, 1024, 768);
 
 Stage stage = new Stage(StageStyle.DECORATED);
@@ -241,6 +246,11 @@ edge.label = false
 edge.arrow = false
 
 # (automatic) Force-directed layout related configurations
+#
+# Notice: deprecated since version 1.1. Force directed layout strategies are now
+# instantiated and can be swapped at runtime, per the Strategy design pattern.
+# The parameters are passed as arguments or one can use the default ones described
+# in the javadoc documentation.
 #   -- You should experiment with different values for your 
 #   -- particular problem, knowing that not all will achieve 
 #   -- a stable state
