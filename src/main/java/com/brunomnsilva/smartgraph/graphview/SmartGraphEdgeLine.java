@@ -25,6 +25,8 @@ package com.brunomnsilva.smartgraph.graphview;
 
 import com.brunomnsilva.smartgraph.graph.Edge;
 import javafx.beans.binding.Bindings;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Line;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
@@ -76,28 +78,42 @@ public class SmartGraphEdgeLine<E, V> extends Line implements SmartGraphEdgeBase
         this.startYProperty().bind(outbound.centerYProperty());
         this.endXProperty().bind(inbound.centerXProperty());
         this.endYProperty().bind(inbound.centerYProperty());
+
+        propagateHoverEffectToArrow();
     }
 
     @Override
     public void setStyleInline(String css) {
         styleProxy.setStyleInline(css);
+        if(attachedArrow != null) {
+            attachedArrow.setStyleInline(css);
+        }
     }
 
     @Override
     public void setStyleClass(String cssClass) {
         styleProxy.setStyleClass(cssClass);
+        if(attachedArrow != null) {
+            attachedArrow.setStyleClass(cssClass);
+        }
     }
 
     @Override
     public void addStyleClass(String cssClass) {
         styleProxy.addStyleClass(cssClass);
+        if(attachedArrow != null) {
+            attachedArrow.addStyleClass(cssClass);
+        }
     }
 
     @Override
     public boolean removeStyleClass(String cssClass) {
-        return styleProxy.removeStyleClass(cssClass);
+        boolean result = styleProxy.removeStyleClass(cssClass);
+        if(attachedArrow != null) {
+            attachedArrow.removeStyleClass(cssClass);
+        }
+        return result;
     }
-    
 
     @Override
     public void attachLabel(SmartLabel label) {
@@ -116,8 +132,6 @@ public class SmartGraphEdgeLine<E, V> extends Line implements SmartGraphEdgeBase
     public Edge<E, V> getUnderlyingEdge() {
         return underlyingEdge;
     }
-    
-    
 
     @Override
     public void attachArrow(SmartArrow arrow) {
@@ -159,5 +173,19 @@ public class SmartGraphEdgeLine<E, V> extends Line implements SmartGraphEdgeBase
     public SmartStylableNode getStylableLabel() {
         return this.attachedLabel;
     }
-    
+
+    private void propagateHoverEffectToArrow() {
+        this.hoverProperty().addListener((observable, oldValue, newValue) -> {
+            if(attachedArrow != null && newValue) {
+
+                attachedArrow.fireEvent(new MouseEvent(MouseEvent.MOUSE_ENTERED, 0, 0, 0, 0, MouseButton.NONE, 0, true, true, true, true, true, true, true, true, true, true, null));
+
+            } else if(attachedArrow != null) { //newValue is false, hover ended
+
+                attachedArrow.fireEvent(new MouseEvent(MouseEvent.MOUSE_EXITED, 0, 0, 0, 0, MouseButton.NONE, 0, true, true, true, true, true, true, true, true, true, true, null));
+
+            }
+        });
+    }
+
 }
