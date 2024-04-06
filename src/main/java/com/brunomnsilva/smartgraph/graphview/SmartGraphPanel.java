@@ -29,6 +29,7 @@ import com.brunomnsilva.smartgraph.graph.Graph;
 import com.brunomnsilva.smartgraph.graph.Vertex;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.beans.NamedArg;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.BoundingBox;
@@ -82,6 +83,7 @@ public class SmartGraphPanel<V, E> extends Pane {
      */
     private final SmartGraphProperties graphProperties;
 
+    private static final String DEFAULT_CSS_FILE = "smartgraph.css";
     /*
     INTERNAL DATA STRUCTURE
      */
@@ -97,8 +99,8 @@ public class SmartGraphPanel<V, E> extends Pane {
     /*
     INTERACTION WITH VERTICES AND EDGES
      */
-    private Consumer<SmartGraphVertex<V>> vertexClickConsumer = null;
-    private Consumer<SmartGraphEdge<E, V>> edgeClickConsumer = null;
+    private Consumer<SmartGraphVertex<V>> vertexClickConsumer;
+    private Consumer<SmartGraphEdge<E, V>> edgeClickConsumer;
 
     /*
     OPTIONAL PROVIDERS FOR LABELS, RADII AND SHAPE TYPES OF NODES.
@@ -124,153 +126,35 @@ public class SmartGraphPanel<V, E> extends Pane {
 
     /**
      * Constructs a visualization of the graph referenced by
-     * <code>theGraph</code>, using default properties, default circular
-     * placement of vertices, default automatic spring gravity layout strategy
-     * and styling from smartgraph.css.
-     *
-     * @param theGraph underlying graph
-     *
-     * @see Graph
-     */
-    public SmartGraphPanel(Graph<V, E> theGraph) {
-        this(theGraph,
-            new SmartGraphProperties(),
-            new SmartCircularSortedPlacementStrategy(),
-            null,
-            new ForceDirectedSpringGravityLayoutStrategy<>()
-        );
-    }
-
-    /**
-     * Constructs a visualization of the graph referenced by
-     * <code>theGraph</code>, using default properties, default circular
-     * placement of vertices and styling from smartgraph.css.
-     *
-     * @param theGraph underlying graph
-     * @param layoutStrategy the automatic layout strategy
-     * @see Graph
-     */
-    public SmartGraphPanel(Graph<V, E> theGraph, ForceDirectedLayoutStrategy<V> layoutStrategy) {
-        this(theGraph,
-                new SmartGraphProperties(),
-                new SmartCircularSortedPlacementStrategy(),
-                null,
-                layoutStrategy
-        );
-    }
-
-    /**
-     * Constructs a visualization of the graph referenced by
-     * <code>theGraph</code>, using custom properties, default automatic spring gravity layout strategy
-     * and styling from smartgraph.css.
+     * <code>theGraph</code>, using custom parameters.
+     * <br/>
+     * This is the only FXML-friendly constructor (there can only be one). If you need to instantiate the default
+     * parameters (besides <code>graph</code>), they are the following:
+     * <ul>
+     *     <li>properties - <code>new SmartGraphProperties()</code></li>
+     *     <li>placementStrategy - <code>new SmartCircularSortedPlacementStrategy()</code></li>
+     *     <li>cssFileURI - <code>new File("smartgraph.css").toURI()</code></li>
+     *     <li>automaticLayoutStrategy - <code>new ForceDirectedSpringGravityLayoutStrategy()</code></li>
+     * </ul>
      *
      * @param theGraph underlying graph
      * @param properties custom properties
-     */
-    public SmartGraphPanel(Graph<V, E> theGraph, SmartGraphProperties properties) {
-        this(theGraph,
-            properties,
-            new SmartCircularSortedPlacementStrategy(),
-            null,
-            new ForceDirectedSpringGravityLayoutStrategy<>()
-        );
-    }
-
-    /**
-     * Constructs a visualization of the graph referenced by
-     * <code>theGraph</code>, using default properties and styling from smartgraph.css.
-     *
-     * @param theGraph underlying graph
      * @param placementStrategy placement strategy
-     * @param layoutStrategy the automatic layout strategy
-     */
-    public SmartGraphPanel(Graph<V, E> theGraph, SmartPlacementStrategy placementStrategy,
-                           ForceDirectedLayoutStrategy<V> layoutStrategy) {
-        this(theGraph,
-            new SmartGraphProperties(),
-            placementStrategy,
-            null,
-            layoutStrategy
-        );
-    }
-
-    /**
-     * Constructs a visualization of the graph referenced by
-     * <code>theGraph</code>, using custom placement of
-     * vertices, default properties, default automatic spring gravity layout strategy
-     * and styling from smartgraph.css.
-     *
-     * @param theGraph underlying graph
-     * @param placementStrategy placement strategy, null for default
-     */
-    public SmartGraphPanel(Graph<V, E> theGraph, SmartPlacementStrategy placementStrategy) {
-        this(theGraph,
-                new SmartGraphProperties(),
-                placementStrategy,
-                null,
-                new ForceDirectedSpringGravityLayoutStrategy<>()
-        );
-    }
-
-    /**
-     * Constructs a visualization of the graph referenced by
-     * <code>theGraph</code>, using custom properties and custom placement of
-     * vertices, default automatic spring gravity layout strategy
-     * and styling from smartgraph.css.
-     *
-     * @param theGraph underlying graph
-     * @param properties custom properties, null for default
-     * @param placementStrategy placement strategy, null for default
-     */
-    public SmartGraphPanel(Graph<V, E> theGraph, SmartGraphProperties properties,
-            SmartPlacementStrategy placementStrategy) {
-
-        this(theGraph,
-            properties,
-            placementStrategy,
-            null,
-            new ForceDirectedSpringGravityLayoutStrategy<>()
-        );
-    }
-    
-    /**
-     * Constructs a visualization of the graph referenced by
-     * <code>theGraph</code>, using custom properties, custom placement of
-     * vertices and default automatic spring gravity layout strategy.
-     *
-     * @param theGraph underlying graph
-     * @param properties custom properties, null for default
-     * @param placementStrategy placement strategy, null for default
-     * @param cssFile alternative css file, instead of default 'smartgraph.css'
-     */
-    public SmartGraphPanel(Graph<V, E> theGraph, SmartGraphProperties properties,
-            SmartPlacementStrategy placementStrategy, URI cssFile) {
-
-        this(theGraph,
-            properties,
-            placementStrategy,
-            cssFile,
-            new ForceDirectedSpringGravityLayoutStrategy<>()
-        );
-    }
-
-    /**
-     * Constructs a visualization of the graph referenced by
-     * <code>theGraph</code>, using custom parameters.
-     *
-     * @param theGraph underlying graph
-     * @param properties custom properties, null for default
-     * @param placementStrategy placement strategy, null for default
      * @param cssFile alternative css file, instead of default 'smartgraph.css'
      * @param layoutStrategy  the automatic layout strategy to use
+     * @throws IllegalArgumentException if any of the arguments is <code>null</code>
      */
-    public SmartGraphPanel(Graph<V, E> theGraph, SmartGraphProperties properties,
-                           SmartPlacementStrategy placementStrategy, URI cssFile,
-                           ForceDirectedLayoutStrategy<V> layoutStrategy) {
+    public SmartGraphPanel(@NamedArg("graph") Graph<V, E> theGraph,
+                           @NamedArg("properties") SmartGraphProperties properties,
+                           @NamedArg("placementStrategy") SmartPlacementStrategy placementStrategy,
+                           @NamedArg("cssFileURI") URI cssFile,
+                           @NamedArg("automaticLayoutStrategy") ForceDirectedLayoutStrategy<V> layoutStrategy) {
 
         Args.requireNotNull(theGraph, "theGraph");
         Args.requireNotNull(properties, "properties");
         Args.requireNotNull(placementStrategy, "placementStrategy");
+        Args.requireNotNull(cssFile, "cssFile");
+        Args.requireNotNull(layoutStrategy, "layoutStrategy");
 
         this.theGraph = theGraph;
         this.graphProperties = properties;
@@ -284,8 +168,13 @@ public class SmartGraphPanel<V, E> extends Pane {
         this.edgeNodes = new HashMap<>();
         this.connections = new HashMap<>();
 
+        // consumers initially are not set. This initialization is not necessary, but we make it explicit
+        // for the sake of readability
+        this.vertexClickConsumer = null;
+        this.edgeClickConsumer = null;
+
         //set stylesheet and class
-        loadStylesheet(cssFile);
+        loadAndApplyStylesheet(cssFile);
 
         initNodes();
 
@@ -309,6 +198,148 @@ public class SmartGraphPanel<V, E> extends Pane {
             }
         });
     }
+
+    /**
+     * Constructs a visualization of the graph referenced by
+     * <code>theGraph</code>, using default properties, default circular
+     * placement of vertices, default automatic spring gravity layout strategy
+     * and styling from smartgraph.css.
+     * @see Graph
+     * @see SmartGraphProperties
+     * @see SmartCircularSortedPlacementStrategy
+     * @see ForceDirectedSpringGravityLayoutStrategy
+     *
+     * @param theGraph underlying graph
+     * @throws IllegalArgumentException if <code>theGraph</code> is <code>null</code>
+     */
+    public SmartGraphPanel(Graph<V, E> theGraph) {
+        this(theGraph,
+            new SmartGraphProperties(),
+            new SmartCircularSortedPlacementStrategy(),
+            new File(DEFAULT_CSS_FILE).toURI(),
+            new ForceDirectedSpringGravityLayoutStrategy<>()
+        );
+    }
+
+    /**
+     * Constructs a visualization of the graph referenced by
+     * <code>theGraph</code>, using default properties, default circular
+     * placement of vertices and styling from smartgraph.css.
+     *
+     * @param theGraph underlying graph
+     * @param layoutStrategy the automatic layout strategy
+     * @throws IllegalArgumentException if any of the arguments is <code>null</code>
+     */
+    public SmartGraphPanel(Graph<V, E> theGraph, ForceDirectedLayoutStrategy<V> layoutStrategy) {
+        this(theGraph,
+            new SmartGraphProperties(),
+            new SmartCircularSortedPlacementStrategy(),
+            new File(DEFAULT_CSS_FILE).toURI(),
+            layoutStrategy
+        );
+    }
+
+    /**
+     * Constructs a visualization of the graph referenced by
+     * <code>theGraph</code>, using custom properties, default automatic spring gravity layout strategy
+     * and styling from smartgraph.css.
+     *
+     * @param theGraph underlying graph
+     * @param properties custom properties
+     * @throws IllegalArgumentException if any of the arguments is <code>null</code>
+     */
+    public SmartGraphPanel(Graph<V, E> theGraph, SmartGraphProperties properties) {
+        this(theGraph,
+            properties,
+            new SmartCircularSortedPlacementStrategy(),
+            new File(DEFAULT_CSS_FILE).toURI(),
+            new ForceDirectedSpringGravityLayoutStrategy<>()
+        );
+    }
+
+    /**
+     * Constructs a visualization of the graph referenced by
+     * <code>theGraph</code>, using default properties and styling from smartgraph.css.
+     *
+     * @param theGraph underlying graph
+     * @param placementStrategy placement strategy
+     * @param layoutStrategy the automatic layout strategy
+     * @throws IllegalArgumentException if any of the arguments is <code>null</code>
+     */
+    public SmartGraphPanel(Graph<V, E> theGraph, SmartPlacementStrategy placementStrategy,
+                           ForceDirectedLayoutStrategy<V> layoutStrategy) {
+        this(theGraph,
+            new SmartGraphProperties(),
+            placementStrategy,
+            new File(DEFAULT_CSS_FILE).toURI(),
+            layoutStrategy
+        );
+    }
+
+    /**
+     * Constructs a visualization of the graph referenced by
+     * <code>theGraph</code>, using custom placement of
+     * vertices, default properties, default automatic spring gravity layout strategy
+     * and styling from smartgraph.css.
+     *
+     * @param theGraph underlying graph
+     * @param placementStrategy placement strategy, null for default
+     * @throws IllegalArgumentException if any of the arguments is <code>null</code>
+     */
+    public SmartGraphPanel(Graph<V, E> theGraph, SmartPlacementStrategy placementStrategy) {
+        this(theGraph,
+            new SmartGraphProperties(),
+            placementStrategy,
+            new File(DEFAULT_CSS_FILE).toURI(),
+            new ForceDirectedSpringGravityLayoutStrategy<>()
+        );
+    }
+
+    /**
+     * Constructs a visualization of the graph referenced by
+     * <code>theGraph</code>, using custom properties and custom placement of
+     * vertices, default automatic spring gravity layout strategy
+     * and styling from smartgraph.css.
+     *
+     * @param theGraph underlying graph
+     * @param properties custom properties, null for default
+     * @param placementStrategy placement strategy, null for default
+     * @throws IllegalArgumentException if any of the arguments is <code>null</code>
+     */
+    public SmartGraphPanel(Graph<V, E> theGraph, SmartGraphProperties properties,
+            SmartPlacementStrategy placementStrategy) {
+
+        this(theGraph,
+            properties,
+            placementStrategy,
+            new File(DEFAULT_CSS_FILE).toURI(),
+            new ForceDirectedSpringGravityLayoutStrategy<>()
+        );
+    }
+    
+    /**
+     * Constructs a visualization of the graph referenced by
+     * <code>theGraph</code>, using custom properties, custom placement of
+     * vertices and default automatic spring gravity layout strategy.
+     *
+     * @param theGraph underlying graph
+     * @param properties custom properties, null for default
+     * @param placementStrategy placement strategy, null for default
+     * @param cssFile alternative css file, instead of default 'smartgraph.css'
+     * @throws IllegalArgumentException if any of the arguments is <code>null</code>
+     */
+    public SmartGraphPanel(Graph<V, E> theGraph, SmartGraphProperties properties,
+            SmartPlacementStrategy placementStrategy, URI cssFile) {
+
+        this(theGraph,
+            properties,
+            placementStrategy,
+            cssFile,
+            new ForceDirectedSpringGravityLayoutStrategy<>()
+        );
+    }
+
+
 
     private synchronized void runAutomaticLayout() {
         for (int i = 0; i < AUTOMATIC_LAYOUT_ITERATIONS; i++) {
@@ -347,8 +378,8 @@ public class SmartGraphPanel<V, E> extends Pane {
                     this.heightProperty().doubleValue(),
                     this);
         } else {
-            //apply random placement
-            new SmartRandomPlacementStrategy().place(this.widthProperty().doubleValue(),
+            //apply circular placement, I think it's a better initial state for automatic layout
+            new SmartCircularSortedPlacementStrategy().place(this.widthProperty().doubleValue(),
                     this.heightProperty().doubleValue(),
                     this);
 
@@ -1247,20 +1278,14 @@ public class SmartGraphPanel<V, E> extends Pane {
     /**
      * Loads the stylesheet and applies the .graph class to this panel.
      */
-    private void loadStylesheet(URI cssFile) {
+    private void loadAndApplyStylesheet(URI cssFile) {
         try {
-            String css;
-            if( cssFile != null ) {
-                css = cssFile.toURL().toExternalForm();
-            } else {
-                File f = new File("smartgraph.css");
-                css = f.toURI().toURL().toExternalForm();
-            }
-
+            String css = cssFile.toURL().toExternalForm();
             getStylesheets().add(css);
             this.getStyleClass().add("graph");
         } catch (MalformedURLException ex) {
-            Logger.getLogger(SmartGraphPanel.class.getName()).log(Level.SEVERE, null, ex);
+            String msg = String.format("Error loading stylesheet from URI = %s", cssFile);
+            Logger.getLogger(SmartGraphPanel.class.getName()).log(Level.SEVERE, msg, ex);
         }
     }
 
@@ -1275,10 +1300,6 @@ public class SmartGraphPanel<V, E> extends Pane {
         setOnMouseClicked((MouseEvent mouseEvent) -> {
             if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
                 if (mouseEvent.getClickCount() == 2) {
-                    //no need to continue otherwise
-                    if (vertexClickConsumer == null && edgeClickConsumer == null) {
-                        return;
-                    }
 
                     Node node = pick(SmartGraphPanel.this, mouseEvent.getSceneX(), mouseEvent.getSceneY());
                     if (node == null) {
@@ -1287,10 +1308,14 @@ public class SmartGraphPanel<V, E> extends Pane {
 
                     if (node instanceof SmartGraphVertex) {
                         SmartGraphVertex<V> v = (SmartGraphVertex<V>) node;
-                        vertexClickConsumer.accept(v);
+                        if(vertexClickConsumer != null) { // Only if the consumer is set
+                            vertexClickConsumer.accept(v);
+                        }
                     } else if (node instanceof SmartGraphEdge) {
                         SmartGraphEdge<E,V> e = (SmartGraphEdge<E,V>) node;
-                        edgeClickConsumer.accept(e);
+                        if(edgeClickConsumer != null) { // Only if the consumer is set
+                            edgeClickConsumer.accept(e);
+                        }
                     }
                 }
             }
